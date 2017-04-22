@@ -29,7 +29,7 @@ public class Sensor implements Runnable {
 
 	public void startTransmitting() {
 		try {
-			socket = new DatagramSocket(8080);
+			socket = new DatagramSocket(remotePort);
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
@@ -78,7 +78,7 @@ public class Sensor implements Runnable {
 	}
 
 	public static void main(String[] args) throws Exception {
-		remoteHost = InetAddress.getByName("localhost");
+		remoteHost = InetAddress.getByName("selim.co");
 		remotePort = 1337;
 		new Sensor("milk").startTransmitting();
 		Thread.sleep(1000000L);

@@ -2,7 +2,6 @@ package vs17;
 
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
-import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -42,8 +41,8 @@ public class Central implements Runnable {
 	@Override
 	public void run() {
 		try {
-			while (!Thread.currentThread().isInterrupted()) {
-				DatagramSocket managementSocket = new DatagramSocket(8080);
+			DatagramSocket managementSocket = new DatagramSocket(1338);
+			while (true) {
 				byte[] incomingData = new byte[1];
 				DatagramPacket incomingPacket = new DatagramPacket(incomingData, incomingData.length);
 				managementSocket.receive(incomingPacket);
