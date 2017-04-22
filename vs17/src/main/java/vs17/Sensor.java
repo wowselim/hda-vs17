@@ -7,7 +7,6 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.IntStream;
 
 public class Sensor implements Runnable {
 	private static int instanceCount;
@@ -15,7 +14,7 @@ public class Sensor implements Runnable {
 	private String product;
 	private volatile int amount;
 
-	private volatile boolean connected;
+	private volatile boolean connected = true;
 
 	private DatagramSocket socket;
 	private DatagramPacket packet;
@@ -48,7 +47,7 @@ public class Sensor implements Runnable {
 					cancel();
 				}
 			}
-		}, 1_000L, 3_000L);
+		}, 1_000L, 10_000L);
 	}
 
 	public void stopTransmitting() {
@@ -57,31 +56,37 @@ public class Sensor implements Runnable {
 
 	@Override
 	public void run() {
-		while (connected) {
-			try {
-				TimeUnit.SECONDS.sleep(5L);
-				byte[] msg = (product + ',' + amount).getBytes();
+		try {
+			while (connected) {
+				byte[] msg = new byte[128];
+				byte[] productBytes = product.getBytes();
+				byte[] seperator = new byte[] { '#' };
+				byte[] amountBytes = String.valueOf(amount).getBytes();
+				System.arraycopy(productBytes, 0, msg, 0, productBytes.length);
+				System.arraycopy(seperator, 0, msg, productBytes.length, seperator.length);
+				System.arraycopy(amountBytes, 0, msg, productBytes.length + 1, amountBytes.length);
 				packet = new DatagramPacket(msg, msg.length, remoteHost, remotePort);
 				socket.send(packet);
-			} catch (Exception e) {
-				throw new RuntimeException(e);
-			} finally {
-				socket.close();
+				System.out.println("Sent " + new String(packet.getData()));
+				TimeUnit.SECONDS.sleep(1L);
 			}
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		} finally {
+			socket.close();
 		}
 	}
 
-	public static void main(String[] args) {
-		try {
-			remoteHost = InetAddress.getByName(args[0]);
-			remotePort = Integer.parseInt(args[1]);
-		} catch (Exception e) {
-			System.out.println("Usage: <remoteHost> <remotePort>");
-			throw new RuntimeException(e);
-		}
-
-		IntStream.range(0, 10).forEach(i -> {
-			new Sensor("milk").startTransmitting();
-		});
+	public static void main(String[] args) throws Exception {
+		remoteHost = InetAddress.getByName("localhost");
+		remotePort = 1337;
+		new Sensor("milk").startTransmitting();
+		Thread.sleep(1000000L);
+		/*
+		 * try { remoteHost = InetAddress.getByName(args[0]); remotePort =
+		 * Integer.parseInt(args[1]); } catch (Exception e) {
+		 * System.out.println("Usage: <remoteHost> <remotePort>"); throw new
+		 * RuntimeException(e); }
+		 */
 	}
 }
