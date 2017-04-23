@@ -12,9 +12,25 @@ import java.util.TreeMap;
 
 public class Central implements Runnable {
 	private static Map<String, List<Integer>> productTable = new TreeMap<>();
+	private static int dataPort = 1337;
+	private static int managementPort = 1338;
 
 	public static void main(String[] args) throws Exception {
-		DatagramSocket socket = new DatagramSocket(1337);
+		for (int i = 0; i < args.length; i++) {
+			try {
+				if (i == 0) {
+					dataPort = Integer.parseInt(args[0]);
+				} else if (i == 1) {
+					managementPort = Integer.parseInt(args[1]);
+				}
+			} catch (Exception e) {
+				System.out.println("Usage: <dataPort> <managementPort>");
+				e.printStackTrace();
+			}
+		}
+		System.out.printf("Receiving Data on %d.%n", dataPort);
+		System.out.printf("Management port is %d.%n", managementPort);
+		DatagramSocket socket = new DatagramSocket(dataPort);
 		DatagramPacket packet = new DatagramPacket(new byte[128], 128);
 		Thread managementThread = new Thread(new Central(), "Management Thread");
 		managementThread.start();
@@ -49,7 +65,7 @@ public class Central implements Runnable {
 	@Override
 	public void run() {
 		try {
-			DatagramSocket managementSocket = new DatagramSocket(1338);
+			DatagramSocket managementSocket = new DatagramSocket(managementPort);
 			while (true) {
 				byte[] incomingData = new byte[1];
 				DatagramPacket incomingPacket = new DatagramPacket(incomingData, incomingData.length);
