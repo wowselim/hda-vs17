@@ -4,6 +4,8 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -28,6 +30,12 @@ public class Central implements Runnable {
 			if (value != null) {
 				if (!value.contains(amount)) {
 					value.add(amount);
+					Collections.sort(value, new Comparator<Integer>() {
+						@Override
+						public int compare(Integer o1, Integer o2) {
+							return -o1.compareTo(o2);
+						}
+					});
 					System.out.printf("Updated value for %s to %d.%n", product, amount);
 				}
 			} else {

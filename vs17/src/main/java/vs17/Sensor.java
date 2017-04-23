@@ -3,6 +3,8 @@ package vs17;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.ThreadLocalRandom;
@@ -21,6 +23,8 @@ public class Sensor implements Runnable {
 	private static InetAddress remoteHost;
 	private static int remotePort;
 
+	private static List<Thread> threads = new ArrayList<>();
+
 	public Sensor(final String product) {
 		this.instanceNo = ++instanceCount;
 		this.product = product;
@@ -29,12 +33,13 @@ public class Sensor implements Runnable {
 
 	public void startTransmitting() {
 		try {
-			socket = new DatagramSocket(remotePort);
+			socket = new DatagramSocket();
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
 		Thread thread = new Thread(this, String.format("Transmitter for Sensor %d", instanceNo));
 		thread.setDaemon(true);
+		threads.add(thread);
 		thread.start();
 
 		Timer timer = new Timer(String.format("Timer for Sensor %d", instanceNo), true);
@@ -78,15 +83,23 @@ public class Sensor implements Runnable {
 	}
 
 	public static void main(String[] args) throws Exception {
-		remoteHost = InetAddress.getByName("selim.co");
-		remotePort = 1337;
-		new Sensor("milk").startTransmitting();
-		Thread.sleep(1000000L);
-		/*
-		 * try { remoteHost = InetAddress.getByName(args[0]); remotePort =
-		 * Integer.parseInt(args[1]); } catch (Exception e) {
-		 * System.out.println("Usage: <remoteHost> <remotePort>"); throw new
-		 * RuntimeException(e); }
-		 */
+		try {
+			remoteHost = InetAddress.getByName(args[0]);
+			remotePort = Integer.parseInt(args[1]);
+			int numberOfSensors = Integer.parseInt(args[2]);
+			String[] products = new String[] { "milk", "cheese", "ice cream", "banana", "tomato" };
+
+			for (int i = 0; i < numberOfSensors; i++) {
+				Sensor sensor = new Sensor(products[i % products.length]);
+				sensor.startTransmitting();
+			}
+			System.out.printf("Started %n Sensors for %d Products.%n", threads.size(), products.length);
+			for (Thread t : threads) {
+				t.join();
+			}
+		} catch (Exception e) {
+			System.out.println("Usage: <remoteHost> <remotePort> <numberOfSensors>");
+			throw new RuntimeException(e);
+		}
 	}
 }
