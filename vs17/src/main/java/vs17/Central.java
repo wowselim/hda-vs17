@@ -28,7 +28,7 @@ public class Central implements Runnable {
 				e.printStackTrace();
 			}
 		}
-		System.out.printf("Receiving Data on %d.%n", dataPort);
+		System.out.printf("Receiving data on %d.%n", dataPort);
 		System.out.printf("Management port is %d.%n", managementPort);
 		DatagramSocket socket = new DatagramSocket(dataPort);
 		DatagramPacket packet = new DatagramPacket(new byte[128], 128);

@@ -37,12 +37,12 @@ public class Sensor implements Runnable {
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
-		Thread thread = new Thread(this, String.format("Transmitter for Sensor %d", instanceNo));
+		Thread thread = new Thread(this, String.format("Transmitter for sensor %d", instanceNo));
 		thread.setDaemon(true);
 		threads.add(thread);
 		thread.start();
 
-		Timer timer = new Timer(String.format("Timer for Sensor %d", instanceNo), true);
+		Timer timer = new Timer(String.format("Timer for sensor %d", instanceNo), true);
 		timer.scheduleAtFixedRate(new TimerTask() {
 			@Override
 			public void run() {
@@ -93,7 +93,7 @@ public class Sensor implements Runnable {
 				Sensor sensor = new Sensor(products[i % products.length]);
 				sensor.startTransmitting();
 			}
-			System.out.printf("Started %n Sensors for %d Products.%n", threads.size(), products.length);
+			System.out.printf("Started %n sensors for %d products.%n", threads.size(), products.length);
 			for (Thread t : threads) {
 				t.join();
 			}
