@@ -6,10 +6,11 @@ import java.util.TimerTask;
 import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.HdrHistogram.ConcurrentHistogram;
 import org.HdrHistogram.Histogram;
 
 public class LatencyTimer {
-	private static Histogram histogram = new Histogram(3);
+	private static Histogram histogram = new ConcurrentHistogram(3);
 	private static Map<Long, Long> packetTimestamps = new ConcurrentHashMap<>();
 	private static double[] desiredPercentiles = new double[] { 0.5, 0.8, 0.95, 0.99, 1.0 };
 	private static TimerTask timerTask = new TimerTask() {
