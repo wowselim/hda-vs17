@@ -2,6 +2,7 @@ package vs17;
 
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
+import java.net.InetAddress;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Map;
@@ -39,7 +40,7 @@ public class Central implements Runnable {
 				String dataAsString = new String(data);
 				String[] parts = dataAsString.split("#");
 				String product = parts[0];
-				int amount = Integer.parseInt(parts[1].trim());
+				int amount = Integer.parseInt(parts[1]);
 				Set<Integer> value = productTable.get(product);
 				if (value != null) {
 					if (value.add(amount)) {
@@ -48,9 +49,19 @@ public class Central implements Runnable {
 				} else {
 					productTable.put(product, new HashSet<>(Arrays.asList(amount)));
 				}
+				sendAcknowledge(socket, packet.getAddress(), packet.getPort(), parts[2].trim());
 
 				System.out.println(productTable);
 			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+
+	private static void sendAcknowledge(DatagramSocket socket, InetAddress address, int port, String packetId) {
+		try {
+			DatagramPacket ackPacket = new DatagramPacket(Arrays.copyOf(packetId.getBytes(), 32), 32, address, port);
+			socket.send(ackPacket);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

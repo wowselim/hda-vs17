@@ -1,9 +1,11 @@
 package vs17;
 
+import java.io.ByteArrayOutputStream;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -24,6 +26,8 @@ public class Sensor implements Runnable {
 	private static int remotePort;
 
 	private static List<Thread> threads = new ArrayList<>();
+
+	private static long packetId;
 
 	public Sensor(final String product) {
 		this.instanceNo = ++instanceCount;
@@ -61,25 +65,31 @@ public class Sensor implements Runnable {
 
 	@Override
 	public void run() {
-		try {
-			while (connected) {
-				byte[] msg = new byte[128];
-				byte[] productBytes = product.getBytes();
+		while (connected) {
+			try (ByteArrayOutputStream byteWriter = new ByteArrayOutputStream()) {
+				byte[] msg;
 				byte[] seperator = new byte[] { '#' };
+				byte[] productBytes = product.getBytes();
 				byte[] amountBytes = String.valueOf(amount).getBytes();
-				System.arraycopy(productBytes, 0, msg, 0, productBytes.length);
-				System.arraycopy(seperator, 0, msg, productBytes.length, seperator.length);
-				System.arraycopy(amountBytes, 0, msg, productBytes.length + 1, amountBytes.length);
+				byte[] packetIdBytes = String.valueOf(packetId++).getBytes();
+
+				byteWriter.write(productBytes);
+				byteWriter.write(seperator);
+				byteWriter.write(amountBytes);
+				byteWriter.write(seperator);
+				byteWriter.write(packetIdBytes);
+
+				msg = Arrays.copyOf(byteWriter.toByteArray(), 128);
+
 				packet = new DatagramPacket(msg, msg.length, remoteHost, remotePort);
 				socket.send(packet);
 				System.out.println("Sent " + new String(packet.getData()));
 				TimeUnit.SECONDS.sleep(1L);
+			} catch (Exception e) {
+				throw new RuntimeException(e);
 			}
-		} catch (Exception e) {
-			throw new RuntimeException(e);
-		} finally {
-			socket.close();
 		}
+		socket.close();
 	}
 
 	public static void main(String[] args) throws Exception {
@@ -93,7 +103,7 @@ public class Sensor implements Runnable {
 				Sensor sensor = new Sensor(products[i % products.length]);
 				sensor.startTransmitting();
 			}
-			System.out.printf("Started %n sensors for %d products.%n", threads.size(), products.length);
+			System.out.printf("Started %d sensors for %d products.%n", threads.size(), products.length);
 			for (Thread t : threads) {
 				t.join();
 			}
