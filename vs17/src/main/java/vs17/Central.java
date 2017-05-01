@@ -2,20 +2,18 @@ package vs17;
 
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
 
 public class Central implements Runnable {
-	private static Map<String, List<Integer>> productTable = new TreeMap<>();
+	private static Map<String, Set<Integer>> productTable = new TreeMap<>();
 	private static int dataPort = 1337;
 	private static int managementPort = 1338;
 
-	public static void main(String[] args) throws Exception {
+	public static void main(String[] args) {
 		for (int i = 0; i < args.length; i++) {
 			try {
 				if (i == 0) {
@@ -30,42 +28,37 @@ public class Central implements Runnable {
 		}
 		System.out.printf("Receiving data on %d.%n", dataPort);
 		System.out.printf("Management port is %d.%n", managementPort);
-		DatagramSocket socket = new DatagramSocket(dataPort);
 		DatagramPacket packet = new DatagramPacket(new byte[128], 128);
 		Thread managementThread = new Thread(new Central(), "Management Thread");
 		managementThread.start();
 
-		while (true) {
-			socket.receive(packet);
-			byte[] data = packet.getData();
-			String dataAsString = new String(data);
-			String[] parts = dataAsString.split("#");
-			String product = parts[0];
-			int amount = Integer.parseInt(parts[1].trim());
-			List<Integer> value = productTable.get(product);
-			if (value != null) {
-				if (!value.contains(amount)) {
-					value.add(amount);
-					Collections.sort(value, new Comparator<Integer>() {
-						@Override
-						public int compare(Integer o1, Integer o2) {
-							return -o1.compareTo(o2);
-						}
-					});
-					System.out.printf("Updated value for %s to %d.%n", product, amount);
+		try (DatagramSocket socket = new DatagramSocket(dataPort)) {
+			while (true) {
+				socket.receive(packet);
+				byte[] data = packet.getData();
+				String dataAsString = new String(data);
+				String[] parts = dataAsString.split("#");
+				String product = parts[0];
+				int amount = Integer.parseInt(parts[1].trim());
+				Set<Integer> value = productTable.get(product);
+				if (value != null) {
+					if (value.add(amount)) {
+						System.out.printf("Updated value for %s to %d.%n", product, amount);
+					}
+				} else {
+					productTable.put(product, new HashSet<>(Arrays.asList(amount)));
 				}
-			} else {
-				productTable.put(product, new ArrayList<Integer>(Arrays.asList(amount)));
-			}
 
-			System.out.println(productTable);
+				System.out.println(productTable);
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
 		}
 	}
 
 	@Override
 	public void run() {
-		try {
-			DatagramSocket managementSocket = new DatagramSocket(managementPort);
+		try (DatagramSocket managementSocket = new DatagramSocket(managementPort)) {
 			while (true) {
 				byte[] incomingData = new byte[1];
 				DatagramPacket incomingPacket = new DatagramPacket(incomingData, incomingData.length);
