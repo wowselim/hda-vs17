@@ -17,7 +17,7 @@ public class ManagementClient {
 
 		try (DatagramSocket clientSocket = new DatagramSocket()) {
 			System.out.printf("Sending ping packet to %s on port %d.%n", host, port);
-			DatagramPacket pingPacket = new DatagramPacket(new byte[1], 1, InetAddress.getByName("selim.co"), 1338);
+			DatagramPacket pingPacket = new DatagramPacket(new byte[1], 1, InetAddress.getByName(host), port);
 			clientSocket.send(pingPacket);
 			byte[] incomingData = new byte[512];
 			DatagramPacket incomingPacket = new DatagramPacket(incomingData, incomingData.length);
