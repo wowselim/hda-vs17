@@ -45,13 +45,12 @@ public class Central implements Runnable {
 				if (value != null) {
 					if (value.add(amount)) {
 						System.out.printf("Updated value for %s to %d.%n", product, amount);
+						System.out.println(productTable);
 					}
 				} else {
 					productTable.put(product, new HashSet<>(Arrays.asList(amount)));
 				}
 				sendAcknowledge(socket, packet.getAddress(), packet.getPort(), parts[2].trim());
-
-				System.out.println(productTable);
 			}
 		} catch (Exception e) {
 			e.printStackTrace();

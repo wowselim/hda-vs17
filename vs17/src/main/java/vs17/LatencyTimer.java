@@ -19,7 +19,7 @@ public class LatencyTimer {
 			for (double percentile : desiredPercentiles) {
 				percentiles.put(percentile, histogram.getValueAtPercentile(percentile * 100.0) / 1_000_000);
 			}
-			System.out.println("Latencies: " + percentiles);
+			System.out.println("Latencies in ms: " + percentiles);
 			packetTimestamps.clear();
 			histogram.reset();
 		}
