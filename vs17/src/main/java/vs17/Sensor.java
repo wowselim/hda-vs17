@@ -11,6 +11,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.ReentrantLock;
 
 public class Sensor implements Runnable {
 	private static int instanceCount;
@@ -28,6 +29,7 @@ public class Sensor implements Runnable {
 	private static List<Thread> threads = new ArrayList<>();
 
 	private static long packetId;
+	private static ReentrantLock mutex = new ReentrantLock();
 
 	public Sensor(final String product) {
 		this.instanceNo = ++instanceCount;
@@ -41,6 +43,28 @@ public class Sensor implements Runnable {
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
+
+		Runnable latencyRecorder = new Runnable() {
+			@Override
+			public void run() {
+				try {
+					while (true) {
+						byte[] ackBuffer = new byte[32];
+						DatagramPacket ackPacket = new DatagramPacket(ackBuffer, ackBuffer.length);
+						socket.receive(ackPacket);
+						LatencyTimer.stopTime(Long.parseLong(new String(ackBuffer).trim()));
+					}
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			}
+		};
+		Thread latencyRecorderThread = new Thread(latencyRecorder,
+				String.format("LatencyRecorder for sensor %d", instanceNo));
+		latencyRecorderThread.setDaemon(true);
+		threads.add(latencyRecorderThread);
+		latencyRecorderThread.start();
+
 		Thread thread = new Thread(this, String.format("Transmitter for sensor %d", instanceNo));
 		thread.setDaemon(true);
 		threads.add(thread);
@@ -66,6 +90,7 @@ public class Sensor implements Runnable {
 	@Override
 	public void run() {
 		while (connected) {
+			mutex.lock();
 			try (ByteArrayOutputStream byteWriter = new ByteArrayOutputStream()) {
 				byte[] msg;
 				byte[] seperator = new byte[] { '#' };
@@ -83,10 +108,17 @@ public class Sensor implements Runnable {
 
 				packet = new DatagramPacket(msg, msg.length, remoteHost, remotePort);
 				socket.send(packet);
-				System.out.println("Sent " + new String(packet.getData()));
-				TimeUnit.SECONDS.sleep(1L);
+				LatencyTimer.startTime(packetId);
+
 			} catch (Exception e) {
 				throw new RuntimeException(e);
+			} finally {
+				mutex.unlock();
+			}
+			try {
+				TimeUnit.SECONDS.sleep(1L);
+			} catch (Exception e) {
+				e.printStackTrace();
 			}
 		}
 		socket.close();
@@ -104,6 +136,10 @@ public class Sensor implements Runnable {
 				sensor.startTransmitting();
 			}
 			System.out.printf("Started %d sensors for %d products.%n", threads.size(), products.length);
+
+			LatencyTimer.start();
+			System.out.println("Started latency recording.");
+
 			for (Thread t : threads) {
 				t.join();
 			}
