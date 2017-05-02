@@ -3,6 +3,7 @@ package vs17;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
+import java.net.ServerSocket;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Map;
@@ -13,6 +14,7 @@ public class Central implements Runnable {
 	private static Map<String, Set<Integer>> productTable = new TreeMap<>();
 	private static int dataPort = 1337;
 	private static int managementPort = 1338;
+	private static int httpPort = 8080;
 
 	public static void main(String[] args) {
 		for (int i = 0; i < args.length; i++) {
@@ -21,17 +23,38 @@ public class Central implements Runnable {
 					dataPort = Integer.parseInt(args[0]);
 				} else if (i == 1) {
 					managementPort = Integer.parseInt(args[1]);
+				} else if (i == 2) {
+					httpPort = Integer.parseInt(args[2]);
 				}
 			} catch (Exception e) {
-				System.out.println("Usage: <dataPort> <managementPort>");
+				System.out.println("Usage: <dataPort> <managementPort> <httpPort>");
 				e.printStackTrace();
 			}
 		}
 		System.out.printf("Receiving data on %d.%n", dataPort);
 		System.out.printf("Management port is %d.%n", managementPort);
+		System.out.printf("Listening for HTTP connections on port %d.%n", httpPort);
 		DatagramPacket packet = new DatagramPacket(new byte[128], 128);
 		Thread managementThread = new Thread(new Central(), "Management Thread");
 		managementThread.start();
+
+		Thread httpHandlerThread = new Thread(new Runnable() {
+			@Override
+			public void run() {
+				try (ServerSocket serverSocket = new ServerSocket(httpPort)) {
+					while (true) {
+						new Thread(new HttpHandler(serverSocket.accept())).start();
+					}
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+				while (true) {
+
+				}
+			}
+		}, "HttpHandler Thread");
+		httpHandlerThread.setDaemon(true);
+		httpHandlerThread.start();
 
 		try (DatagramSocket socket = new DatagramSocket(dataPort)) {
 			while (true) {
@@ -84,5 +107,9 @@ public class Central implements Runnable {
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
+	}
+
+	public static Map<String, Set<Integer>> getProductTable() {
+		return productTable;
 	}
 }
