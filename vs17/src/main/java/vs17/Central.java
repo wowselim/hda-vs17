@@ -10,19 +10,11 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 
-import org.apache.thrift.server.TServer;
-import org.apache.thrift.server.TSimpleServer;
-import org.apache.thrift.transport.TServerSocket;
-import org.apache.thrift.transport.TServerTransport;
-import org.apache.thrift.transport.TTransportException;
-
 public class Central implements Runnable {
 	private static Map<String, Set<Integer>> productTable = new TreeMap<>();
 	private static int dataPort = 1337;
 	private static int managementPort = 1338;
 	private static int httpPort = 8080;
-	private static StoreServer storeServer;
-	private static Store.Processor<StoreServer> processor;
 
 	public static void main(String[] args) {
 		for (int i = 0; i < args.length; i++) {
@@ -63,27 +55,6 @@ public class Central implements Runnable {
 		}, "HttpHandler Thread");
 		httpHandlerThread.setDaemon(true);
 		httpHandlerThread.start();
-
-		try {
-			storeServer = new StoreServer();
-			processor = new Store.Processor<StoreServer>(storeServer);
-			new Thread(new Runnable() {
-				@Override
-				public void run() {
-					TServerTransport serverTransport;
-					try {
-						serverTransport = new TServerSocket(8888);
-						TServer server = new TSimpleServer(new TServer.Args(serverTransport).processor(processor));
-						System.out.println("Thrift serving on port 8888.");
-						server.serve();
-					} catch (TTransportException e) {
-						e.printStackTrace();
-					}
-				}
-			}, "ThriftStore").start();
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
 
 		try (DatagramSocket socket = new DatagramSocket(dataPort)) {
 			while (true) {
