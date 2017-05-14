@@ -4,14 +4,14 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.ServerSocket;
+import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.TreeMap;
 
 public class Central implements Runnable {
-	private static Map<String, Set<Integer>> productTable = new TreeMap<>();
+	private static Map<String, List<Integer>> productTable = new TreeMap<>();
 	private static int dataPort = 1337;
 	private static int managementPort = 1338;
 	private static int httpPort = 8080;
@@ -64,25 +64,33 @@ public class Central implements Runnable {
 				String[] parts = dataAsString.split("#");
 				String product = parts[0];
 				int amount = Integer.parseInt(parts[1]);
-				Set<Integer> value = productTable.get(product);
+				List<Integer> value = productTable.get(product);
 				if (value != null) {
-					if (value.add(amount)) {
-						System.out.printf("Updated value for %s to %d.%n", product, amount);
-						System.out.println(productTable);
+					if(value.size() > 0) {
+						int currentAmount = value.get(value.size() - 1);
+						int delta = Math.abs(amount - currentAmount);
+						if(delta > 0 && delta < 2) {
+							// sensor is up to date, update value
+							value.add(amount);
+						}
 					}
 				} else {
-					productTable.put(product, new HashSet<>(Arrays.asList(amount)));
+					productTable.put(product, new ArrayList<>(Arrays.asList(amount)));
 				}
-				sendAcknowledge(socket, packet.getAddress(), packet.getPort(), parts[2].trim());
+				value = productTable.get(product);
+				sendAcknowledge(socket, packet.getAddress(), packet.getPort(),
+						parts[2].trim() + "#" + value.get(value.size() - 1));
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}
 
-	private static void sendAcknowledge(DatagramSocket socket, InetAddress address, int port, String packetId) {
+	private static void sendAcknowledge(DatagramSocket socket, InetAddress address, int port,
+			String packetIdAndAmount) {
 		try {
-			DatagramPacket ackPacket = new DatagramPacket(Arrays.copyOf(packetId.getBytes(), 32), 32, address, port);
+			DatagramPacket ackPacket = new DatagramPacket(Arrays.copyOf(packetIdAndAmount.getBytes(), 64), 64, address,
+					port);
 			socket.send(ackPacket);
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -109,7 +117,7 @@ public class Central implements Runnable {
 		}
 	}
 
-	public static Map<String, Set<Integer>> getProductTable() {
+	public static Map<String, List<Integer>> getProductTable() {
 		return productTable;
 	}
 }

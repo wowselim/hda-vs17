@@ -5,8 +5,8 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 public class HttpHandler implements Runnable {
 	private static final String endl = System.getProperty("line.separator");
@@ -45,7 +45,7 @@ public class HttpHandler implements Runnable {
 		if (requestedUrl.equals("/")) {
 			response.append("200 OK" + endl);
 			response.append(endl);
-			for (Map.Entry<String, Set<Integer>> entry : Central.getProductTable().entrySet()) {
+			for (Map.Entry<String, List<Integer>> entry : Central.getProductTable().entrySet()) {
 				response.append(entry.getKey() + ": " + Collections.min(entry.getValue()) + endl);
 			}
 			return response.toString();

@@ -49,10 +49,15 @@ public class Sensor implements Runnable {
 			public void run() {
 				try {
 					while (true) {
-						byte[] ackBuffer = new byte[32];
+						byte[] ackBuffer = new byte[64];
 						DatagramPacket ackPacket = new DatagramPacket(ackBuffer, ackBuffer.length);
 						socket.receive(ackPacket);
-						LatencyTimer.stopTime(Long.parseLong(new String(ackBuffer).trim()));
+						String ackResponse = new String(ackBuffer).trim();
+						String[] ackResponseParts = ackResponse.split("#");
+						long packetId = Long.parseLong(ackResponseParts[0]);
+						int amount = Integer.parseInt(ackResponseParts[1]);
+						LatencyTimer.stopTime(packetId);
+						Sensor.this.amount = amount;
 					}
 				} catch (Exception e) {
 					e.printStackTrace();
