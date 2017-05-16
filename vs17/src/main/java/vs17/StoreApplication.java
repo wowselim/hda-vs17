@@ -1,7 +1,5 @@
 package vs17;
 
-import java.util.concurrent.ThreadLocalRandom;
-
 import org.apache.thrift.server.TServer;
 import org.apache.thrift.server.TSimpleServer;
 import org.apache.thrift.transport.TServerSocket;
@@ -25,9 +23,7 @@ public class StoreApplication {
 			processor = new Store.Processor<StoreServer>(storeServer);
 			int productCount = Products.products.length;
 			for (int i = 0; i < productCount; i++) {
-				if (ThreadLocalRandom.current().nextBoolean()) {
-					storeServer.addProduct(Products.products[i]);
-				}
+				storeServer.addProduct(Products.products[i]);
 			}
 
 			TServerTransport serverTransport;
