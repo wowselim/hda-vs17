@@ -5,10 +5,8 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.StringJoiner;
 
 public class HttpHandler implements Runnable {
 	private static final String endl = System.getProperty("line.separator");
@@ -48,7 +46,7 @@ public class HttpHandler implements Runnable {
 			response.append("200 OK" + endl);
 			response.append(endl);
 			for (Map.Entry<String, List<Integer>> entry : Central.getProductTable().entrySet()) {
-				response.append(entry.getKey() + ": " + Collections.min(entry.getValue()) + endl);
+				response.append(entry.getKey() + ": " + entry.getValue().get(entry.getValue().size() - 1) + endl);
 			}
 			return response.toString();
 		} else if (requestedUrl[0].equals("history")) {
@@ -57,7 +55,14 @@ public class HttpHandler implements Runnable {
 			response.append(Central.getProductTable());
 			return response.toString();
 		} else if (requestedUrl[0].equals("buy")) {
-
+			String product = "[undefined]";
+			if (requestedUrl.length == 2) {
+				product = requestedUrl[1];
+			}
+			response.append("200 OK" + endl);
+			response.append(endl);
+			response.append(Central.buyProduct(product));
+			return response.toString();
 		}
 
 		response.append("404 Not Found" + endl);

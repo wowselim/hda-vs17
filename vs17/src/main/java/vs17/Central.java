@@ -15,6 +15,7 @@ public class Central implements Runnable {
 	private static int dataPort = 1337;
 	private static int managementPort = 1338;
 	private static int httpPort = 8080;
+	private static List<String> stores = new ArrayList<>();
 
 	public static void main(String[] args) {
 		for (int i = 0; i < args.length; i++) {
@@ -25,15 +26,19 @@ public class Central implements Runnable {
 					managementPort = Integer.parseInt(args[1]);
 				} else if (i == 2) {
 					httpPort = Integer.parseInt(args[2]);
+				} else {
+					String[] parts = args[i].split(":");
+					stores.add(parts[0] + ':' + parts[1]);
 				}
 			} catch (Exception e) {
-				System.out.println("Usage: <dataPort> <managementPort> <httpPort>");
+				System.out.println("Usage: <dataPort> <managementPort> <httpPort> <storeHost:storePort>[0..n]");
 				e.printStackTrace();
 			}
 		}
 		System.out.printf("Receiving data on %d.%n", dataPort);
 		System.out.printf("Management port is %d.%n", managementPort);
 		System.out.printf("Listening for HTTP connections on port %d.%n", httpPort);
+		System.out.printf("Registered %d stores.%n", stores.size());
 		DatagramPacket packet = new DatagramPacket(new byte[128], 128);
 		Thread managementThread = new Thread(new Central(), "Management Thread");
 		managementThread.start();
@@ -84,6 +89,37 @@ public class Central implements Runnable {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+	}
+
+	public static String buyProduct(String product) {
+		if (Arrays.asList(Products.products).contains(product)) {
+			String cheapestStore = "[undefined]";
+			int cheapestStorePort = -1;
+			int cheapestPrice = Integer.MAX_VALUE;
+			for (String store : stores) {
+				String[] parts = store.split(":");
+				String host = parts[0];
+				int port = Integer.parseInt(parts[1]);
+				int price = StoreClient.requestPrice(product, host, port);
+				if (price < cheapestPrice) {
+					cheapestPrice = price;
+					cheapestStore = host;
+					cheapestStorePort = port;
+				}
+			}
+			if (cheapestStore.equals("[undefined]") || cheapestStorePort == -1) {
+				return "No stores registered";
+			}
+			List<Integer> productHistory = productTable.get(product);
+			if (productHistory != null) {
+				StoreClient.buyProduct(product, 10, cheapestStore, cheapestStorePort);
+				productHistory.add(10);
+				return String.format("Bought 10 %s from %s.%n", product, cheapestStore);
+			} else {
+				return "Product not in fridge";
+			}
+		}
+		return "Product not available";
 	}
 
 	private static void sendAcknowledge(DatagramSocket socket, InetAddress address, int port,
