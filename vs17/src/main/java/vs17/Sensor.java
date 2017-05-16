@@ -134,7 +134,7 @@ public class Sensor implements Runnable {
 			remoteHost = InetAddress.getByName(args[0]);
 			remotePort = Integer.parseInt(args[1]);
 			int numberOfSensors = Integer.parseInt(args[2]);
-			String[] products = new String[] { "milk", "cheese", "ice cream", "banana", "tomato" };
+			String[] products = Products.products;
 
 			for (int i = 0; i < numberOfSensors; i++) {
 				Sensor sensor = new Sensor(products[i % products.length]);
