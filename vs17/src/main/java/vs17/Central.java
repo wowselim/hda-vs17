@@ -8,10 +8,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.TreeMap;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class Central implements Runnable {
-	private static Map<String, List<Integer>> productTable = new TreeMap<>();
+	private static Map<String, List<Integer>> productTable = new ConcurrentHashMap<>(Products.products.length);
 	private static int dataPort = 1337;
 	private static int managementPort = 1338;
 	private static int httpPort = 8080;
@@ -66,10 +66,10 @@ public class Central implements Runnable {
 				int amount = Integer.parseInt(parts[1]);
 				List<Integer> value = productTable.get(product);
 				if (value != null) {
-					if(value.size() > 0) {
+					if (value.size() > 0) {
 						int currentAmount = value.get(value.size() - 1);
 						int delta = Math.abs(amount - currentAmount);
-						if(delta > 0 && delta < 2) {
+						if (delta > 0 && delta < 2) {
 							// sensor is up to date, update value
 							value.add(amount);
 						}

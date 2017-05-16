@@ -4,9 +4,11 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.StringJoiner;
 
 public class HttpHandler implements Runnable {
 	private static final String endl = System.getProperty("line.separator");
@@ -41,32 +43,38 @@ public class HttpHandler implements Runnable {
 
 	private String getResponseForRequest(final String request) {
 		StringBuilder response = new StringBuilder("HTTP/1.1 ");
-		String requestedUrl = getRequestedUrl(request);
-		if (requestedUrl.equals("/")) {
+		String[] requestedUrl = getRequestedUrl(request);
+		if (requestedUrl.length == 0) {
 			response.append("200 OK" + endl);
 			response.append(endl);
 			for (Map.Entry<String, List<Integer>> entry : Central.getProductTable().entrySet()) {
 				response.append(entry.getKey() + ": " + Collections.min(entry.getValue()) + endl);
 			}
 			return response.toString();
-		} else if (requestedUrl.equals("/history")) {
+		} else if (requestedUrl[0].equals("history")) {
 			response.append("200 OK" + endl);
 			response.append(endl);
 			response.append(Central.getProductTable());
 			return response.toString();
+		} else if (requestedUrl[0].equals("buy")) {
+
 		}
 
 		response.append("404 Not Found" + endl);
 		response.append(endl);
-		response.append(String.format("Not found.%nNo mapping for %s.%n", requestedUrl));
+		response.append(String.format("Not found.%nNo mapping for %s.%n", Arrays.toString(requestedUrl)));
 		return response.toString();
 	}
 
-	private String getRequestedUrl(final String request) {
-		String url = "/blubb";
+	private String[] getRequestedUrl(final String request) {
+		String[] url = new String[] { "/blubb" };
 		try {
-			url = request.split("\\s")[1];
+			String route = request.split("\\s")[1];
+			url = route.split("/");
 		} catch (Exception ignored) {
+		}
+		if (url.length > 0) {
+			url = Arrays.copyOfRange(url, 1, url.length);
 		}
 		return url;
 	}
