@@ -1,10 +1,12 @@
-package vs17;
+package vs17.store;
 
 import org.apache.thrift.server.TServer;
 import org.apache.thrift.server.TSimpleServer;
 import org.apache.thrift.transport.TServerSocket;
 import org.apache.thrift.transport.TServerTransport;
 import org.apache.thrift.transport.TTransportException;
+
+import vs17.shared.Products;
 
 public class StoreApplication {
 	private static StoreServer storeServer;

@@ -1,4 +1,4 @@
-package vs17;
+package vs17.central;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;

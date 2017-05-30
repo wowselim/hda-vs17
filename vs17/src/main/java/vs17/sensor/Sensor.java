@@ -1,4 +1,4 @@
-package vs17;
+package vs17.sensor;
 
 import java.io.ByteArrayOutputStream;
 import java.net.DatagramPacket;
@@ -12,6 +12,8 @@ import java.util.TimerTask;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
+
+import vs17.shared.Products;
 
 public class Sensor implements Runnable {
 	private static int instanceCount;

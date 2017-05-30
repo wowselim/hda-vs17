@@ -1,4 +1,4 @@
-package vs17;
+package vs17.management;
 
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;

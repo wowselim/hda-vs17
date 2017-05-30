@@ -1,4 +1,4 @@
-package vs17;
+package vs17.store;
 
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TProtocol;

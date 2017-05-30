@@ -1,4 +1,4 @@
-package vs17;
+package vs17.sensor;
 
 import java.util.Map;
 import java.util.Timer;

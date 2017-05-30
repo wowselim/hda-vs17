@@ -1,4 +1,4 @@
-package vs17;
+package vs17.central;
 
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
@@ -9,6 +9,9 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+
+import vs17.shared.Products;
+import vs17.store.StoreClient;
 
 public class Central implements Runnable {
 	private static Map<String, List<Integer>> productTable = new ConcurrentHashMap<>(Products.products.length);

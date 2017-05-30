@@ -1,4 +1,4 @@
-package vs17;
+package vs17.store;
 
 import java.util.HashSet;
 import java.util.Set;
