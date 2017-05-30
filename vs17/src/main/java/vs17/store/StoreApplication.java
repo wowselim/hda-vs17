@@ -1,5 +1,8 @@
 package vs17.store;
 
+import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.TimeUnit;
+
 import org.apache.thrift.server.TServer;
 import org.apache.thrift.server.TSimpleServer;
 import org.apache.thrift.transport.TServerSocket;
@@ -35,6 +38,24 @@ public class StoreApplication {
 			for (int i = 0; i < productCount; i++) {
 				storeServer.addProduct(Products.products[i]);
 			}
+			
+			new Thread(new Runnable() {
+				@Override
+				public void run() {
+					try {
+						MqttClient client = new MqttClient("tcp://" + producerHost + ':' + producerPort, MqttClient.generateClientId());
+						client.connect();
+						while(true) {
+							TimeUnit.SECONDS.sleep(5);
+							MqttMessage msg = new MqttMessage(String.valueOf(10).getBytes());
+							int random = ThreadLocalRandom.current().nextInt(Products.products.length);
+							client.publish("request/" + Products.products[random], msg);
+						}
+					} catch (Exception e) {
+						e.printStackTrace();
+					}
+				}
+			}, "NachfragePublisherThread").start();
 
 			new Thread(new Runnable() {
 				@Override
